@@ -11,7 +11,6 @@ services:
       - stats-db
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://stats-db:5432/statdb
-      - STATS_SERVER_URL=http://server:9090
       - POSTGRES_USER=iamroot
       - POSTGRES_PASSWORD=iamroot
 

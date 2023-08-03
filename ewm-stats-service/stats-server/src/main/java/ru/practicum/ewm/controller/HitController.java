@@ -1,12 +1,12 @@
-package ru.practicum.ewm.stats.controller;
+package ru.practicum.ewm.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.ewm.stats.HitInputDto;
-import ru.practicum.ewm.stats.HitOutputDto;
-import ru.practicum.ewm.stats.service.HitService;
+import ru.practicum.ewm.HitInputDto;
+import ru.practicum.ewm.HitOutputDto;
+import ru.practicum.ewm.service.HitService;
 
 import javax.validation.Valid;
 import java.time.LocalDateTime;

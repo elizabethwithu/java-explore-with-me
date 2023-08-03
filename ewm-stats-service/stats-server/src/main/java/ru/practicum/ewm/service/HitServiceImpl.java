@@ -1,21 +1,21 @@
-package ru.practicum.ewm.stats.service;
+package ru.practicum.ewm.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.practicum.ewm.stats.HitInputDto;
-import ru.practicum.ewm.stats.HitOutputDto;
-import ru.practicum.ewm.stats.dao.HitDao;
-import ru.practicum.ewm.stats.mapper.HitMapper;
-import ru.practicum.ewm.stats.model.Hit;
+import ru.practicum.ewm.mapper.HitMapper;
+import ru.practicum.ewm.HitInputDto;
+import ru.practicum.ewm.HitOutputDto;
+import ru.practicum.ewm.dao.HitDao;
+import ru.practicum.ewm.model.Hit;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
 @Slf4j
-@Transactional
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class HitServiceImpl implements HitService {
     private final HitDao hitDao;
@@ -27,7 +27,6 @@ public class HitServiceImpl implements HitService {
         log.info("Успешно добавлен {} с айди {}.", savedHit.getApp(), savedHit.getId());
     }
 
-    @Transactional(readOnly = true)
     public List<HitOutputDto> getHitStats(LocalDateTime start, LocalDateTime end, List<String> uris, boolean unique) {
         List<HitOutputDto> hitStats;
         if (uris != null) {

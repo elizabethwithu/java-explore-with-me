@@ -1,7 +1,7 @@
-package ru.practicum.ewm.stats.service;
+package ru.practicum.ewm.service;
 
-import ru.practicum.ewm.stats.HitInputDto;
-import ru.practicum.ewm.stats.HitOutputDto;
+import ru.practicum.ewm.HitInputDto;
+import ru.practicum.ewm.HitOutputDto;
 
 import java.time.LocalDateTime;
 import java.util.List;

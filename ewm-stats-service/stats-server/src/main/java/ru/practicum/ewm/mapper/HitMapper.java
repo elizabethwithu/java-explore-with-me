@@ -1,7 +1,7 @@
-package ru.practicum.ewm.stats.mapper;
+package ru.practicum.ewm.mapper;
 
-import ru.practicum.ewm.stats.HitInputDto;
-import ru.practicum.ewm.stats.model.Hit;
+import ru.practicum.ewm.HitInputDto;
+import ru.practicum.ewm.model.Hit;
 
 public class HitMapper {
     public static Hit toHit(HitInputDto hitInputDto) {
