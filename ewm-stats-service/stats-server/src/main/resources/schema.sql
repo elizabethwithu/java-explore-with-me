@@ -2,9 +2,9 @@ DROP TABLE IF EXISTS hits;
 
 CREATE TABLE IF NOT EXISTS hits
 (
-    hit_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    app varchar(64) NOT NULL,
-    uri varchar(128) NOT NULL,
-    ip varchar(64) NOT NULL,
+    hit_id  BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    app     VARCHAR(64) NOT NULL,
+    uri     VARCHAR(128) NOT NULL,
+    ip      VARCHAR(64) NOT NULL,
     created TIMESTAMP NOT NULL
 );
