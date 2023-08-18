@@ -3,9 +3,7 @@ package ru.practicum.ewm.event.model;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import ru.practicum.ewm.category.model.Category;
-import ru.practicum.ewm.event.location.Location;
 import ru.practicum.ewm.user.model.User;
-import ru.practicum.ewm.utils.enums.State;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
@@ -48,7 +46,7 @@ public class Event {
     @JoinColumn(name = "location_id", nullable = false)
     Location location;
 
-    @Column
+    @Column(columnDefinition = "BOOLEAN DEFAULT false")
     Boolean paid;
 
     @Column(name = "confirmed_requests")
@@ -57,7 +55,7 @@ public class Event {
     @Column(name = "participant_limit")
     Long participantLimit;
 
-    @Column(name = "request_moderation")
+    @Column(name = "request_moderation", columnDefinition = "BOOLEAN DEFAULT true")
     Boolean requestModeration;
 
     @Column(name = "published_on")
@@ -69,7 +67,4 @@ public class Event {
     @Enumerated(EnumType.STRING)
     @Column(name = "state")
     State state;
-
-    @Column(name = "views")
-    Long views;
 }

@@ -2,6 +2,7 @@ package ru.practicum.ewm.compilation.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.ewm.compilation.dto.CompilationOutputDto;
 import ru.practicum.ewm.compilation.service.CompilationService;
@@ -11,6 +12,7 @@ import javax.validation.constraints.PositiveOrZero;
 import java.util.List;
 
 @RestController
+@Validated
 @RequiredArgsConstructor
 @RequestMapping(path = "/compilations")
 public class CompilationPublicController {
@@ -26,7 +28,7 @@ public class CompilationPublicController {
 
     @GetMapping("/{compId}")
     @ResponseStatus(HttpStatus.OK)
-    public CompilationOutputDto findCategoryById(@Positive @PathVariable Long compId) {
+    public CompilationOutputDto findCategoryById(@PathVariable Long compId) {
         return compilationService.findCompilationById(compId);
     }
 }

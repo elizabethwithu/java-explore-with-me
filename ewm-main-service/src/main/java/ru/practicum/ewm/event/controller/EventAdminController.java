@@ -6,17 +6,17 @@ import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.ewm.event.dto.EventFullDto;
-import ru.practicum.ewm.event.dto.UpdateEventDto;
+import ru.practicum.ewm.event.dto.NewEventDto;
+import ru.practicum.ewm.event.dto.Update;
+import ru.practicum.ewm.event.model.State;
 import ru.practicum.ewm.event.service.EventService;
-import ru.practicum.ewm.utils.enums.State;
 
-import javax.validation.Valid;
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.PositiveOrZero;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import static ru.practicum.ewm.utils.constants.DateTimeFormat.DATE_TIME_FORMATTER;
+import static ru.practicum.ewm.utils.DateTimeFormat.DATE_TIME_FORMATTER;
 
 @RestController
 @RequiredArgsConstructor
@@ -40,7 +40,7 @@ public class EventAdminController {
     @PatchMapping("/{eventId}")
     @ResponseStatus(HttpStatus.OK)
     public EventFullDto updateEventByAdmin(@PathVariable Long eventId,
-                                           @Valid @RequestBody UpdateEventDto eventDto) {
+                                           @Validated(Update.class) @RequestBody NewEventDto eventDto) {
         return eventService.updateEventByAdmin(eventId, eventDto);
     }
 }

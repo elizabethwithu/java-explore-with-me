@@ -1,5 +1,7 @@
 package ru.practicum.ewm;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
@@ -15,6 +17,7 @@ import java.util.Map;
 
 @Service
 public class HitClient extends BaseClient {
+    private final ObjectMapper objectMapper = new ObjectMapper();
     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     @Autowired
@@ -31,7 +34,7 @@ public class HitClient extends BaseClient {
         return post("/hit", hitInputDto);
     }
 
-    public ResponseEntity<Object> getHitStats(LocalDateTime start, LocalDateTime end, List<String> uris,
+    public List<HitOutputDto> getHitStats(LocalDateTime start, LocalDateTime end, List<String> uris,
                                               boolean unique) {
         StringBuilder builder = new StringBuilder();
         for (String uri : uris) {
@@ -45,6 +48,9 @@ public class HitClient extends BaseClient {
                 "uris", builder.toString(),
                 "unique", unique
         );
-        return get("/stats?start={start}&end={end}&uris={uris}&unique={unique}", parameters);
+
+        ResponseEntity<Object> response = get("/stats?start={start}&end={end}&uris={uris}&unique={unique}", parameters);
+//        List<HitOutputDto> result = objectMapper.convertValue(response.getBody(), new TypeReference<>() {});
+        return objectMapper.convertValue(response.getBody(), new TypeReference<List<HitOutputDto>>() {});
     }
 }

@@ -5,8 +5,8 @@ import lombok.experimental.FieldDefaults;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -15,11 +15,11 @@ import java.util.List;
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class CompilationInputDto {
-    List<Long> events = new ArrayList<>();
+    Set<Long> events = new HashSet<>();
 
     Boolean pinned;
 
-    @Size(max = 50, message = "Длина заголовка подборки не должна превышать 50 символов.")
-    @NotBlank(message = "Наименование подборки мероприятий не указано.")
+    @Size(max = 50, message = "Длина заголовка подборки превышает 50 символов.", groups = {Create.class, Update.class})
+    @NotBlank(message = "Наименование подборки мероприятий не указано.", groups = Create.class)
     String title;
 }

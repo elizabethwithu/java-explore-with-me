@@ -1,11 +1,3 @@
-DROP TABLE IF EXISTS users CASCADE;
-DROP TABLE IF EXISTS categories CASCADE;
-DROP TABLE IF EXISTS locations CASCADE;
-DROP TABLE IF EXISTS events CASCADE;
-DROP TABLE IF EXISTS requests CASCADE;
-DROP TABLE IF EXISTS compilations CASCADE;
-DROP TABLE IF EXISTS compilations_events CASCADE;
-
 CREATE TABLE IF NOT EXISTS users
 (
     user_id     BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY UNIQUE,
@@ -42,7 +34,6 @@ CREATE TABLE IF NOT EXISTS events
     initiator_id        BIGINT NOT NULL REFERENCES users (user_id),
     state               VARCHAR(9) NOT NULL,
     published_on        TIMESTAMP,
-    views               BIGINT,
     confirmed_requests  BIGINT
 );
 

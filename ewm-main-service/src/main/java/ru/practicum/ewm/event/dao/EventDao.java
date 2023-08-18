@@ -6,16 +6,17 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import ru.practicum.ewm.event.model.Event;
-import ru.practicum.ewm.utils.enums.State;
+import ru.practicum.ewm.event.model.State;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 
 @Repository
 public interface EventDao extends JpaRepository<Event, Long> {
     List<Event> findFirstByCategoryId(Long categoryId);
 
-    List<Event> findByIdIn(List<Long> ids);
+    Set<Event> findByIdIn(Set<Long> ids);
 
     List<Event> findAllByInitiatorId(Long userId, PageRequest pageRequest);
 

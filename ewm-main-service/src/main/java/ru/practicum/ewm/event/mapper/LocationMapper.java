@@ -1,4 +1,7 @@
-package ru.practicum.ewm.event.location;
+package ru.practicum.ewm.event.mapper;
+
+import ru.practicum.ewm.event.dto.LocationDto;
+import ru.practicum.ewm.event.model.Location;
 
 public class LocationMapper {
     public static LocationDto toLocationDto(Location location) {

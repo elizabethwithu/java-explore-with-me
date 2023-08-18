@@ -1,5 +1,6 @@
 package ru.practicum.ewm.compilation.mapper;
 
+import lombok.experimental.UtilityClass;
 import ru.practicum.ewm.compilation.dto.CompilationInputDto;
 import ru.practicum.ewm.compilation.dto.CompilationOutputDto;
 import ru.practicum.ewm.compilation.model.Compilation;
@@ -9,8 +10,9 @@ import ru.practicum.ewm.event.mapper.EventMapper;
 import java.util.ArrayList;
 import java.util.List;
 
+@UtilityClass
 public class CompilationMapper {
-    public static Compilation toCompilation(CompilationInputDto dto) {
+    public Compilation toCompilation(CompilationInputDto dto) {
 
         return Compilation.builder()
                 .title(dto.getTitle())
@@ -18,7 +20,7 @@ public class CompilationMapper {
                 .build();
     }
 
-    public static CompilationOutputDto toCompilationOutputDto(Compilation compilation) {
+    public CompilationOutputDto toCompilationOutputDto(Compilation compilation) {
         List<EventShortDto> events = new ArrayList<>();
         if (compilation.getEvents() != null) {
             events = EventMapper.toEventShortDtoList(compilation.getEvents());
@@ -31,7 +33,7 @@ public class CompilationMapper {
         );
     }
 
-    public static List<CompilationOutputDto> toCompilationDtoList(Iterable<Compilation> compilations) {
+    public List<CompilationOutputDto> toCompilationDtoList(Iterable<Compilation> compilations) {
         List<CompilationOutputDto> result = new ArrayList<>();
 
         for (Compilation compilation : compilations) {

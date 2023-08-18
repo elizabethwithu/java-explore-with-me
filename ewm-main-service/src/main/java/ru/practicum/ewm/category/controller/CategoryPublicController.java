@@ -2,6 +2,7 @@ package ru.practicum.ewm.category.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.ewm.category.dto.CategoryDto;
 import ru.practicum.ewm.category.service.CategoryService;
@@ -11,6 +12,7 @@ import javax.validation.constraints.PositiveOrZero;
 import java.util.List;
 
 @RestController
+@Validated
 @RequiredArgsConstructor
 @RequestMapping(path = "/categories")
 public class CategoryPublicController {
@@ -25,7 +27,7 @@ public class CategoryPublicController {
 
     @GetMapping("/{catId}")
     @ResponseStatus(HttpStatus.OK)
-    public CategoryDto findCategoryById(@Positive @PathVariable("catId") Long categoryId) {
+    public CategoryDto findCategoryById(@PathVariable("catId") Long categoryId) {
         return categoryService.findCategoryById(categoryId);
     }
 }

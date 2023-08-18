@@ -5,8 +5,8 @@ import lombok.experimental.FieldDefaults;
 import ru.practicum.ewm.event.model.Event;
 
 import javax.persistence.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -32,5 +32,5 @@ public class Compilation {
     @JoinTable(name = "compilations_events",
             joinColumns = {@JoinColumn(name = "compilation_id")},
             inverseJoinColumns = {@JoinColumn(name = "event_id")})
-    List<Event> events = new ArrayList<>();
+    Set<Event> events = new HashSet<>();
 }

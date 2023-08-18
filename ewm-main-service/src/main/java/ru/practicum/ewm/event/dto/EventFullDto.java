@@ -3,14 +3,13 @@ package ru.practicum.ewm.event.dto;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-import ru.practicum.ewm.category.model.Category;
-import ru.practicum.ewm.event.location.LocationDto;
+import ru.practicum.ewm.category.dto.CategoryDto;
+import ru.practicum.ewm.event.model.State;
 import ru.practicum.ewm.user.dto.UserShortDto;
-import ru.practicum.ewm.utils.enums.State;
 
 import java.time.LocalDateTime;
 
-import static ru.practicum.ewm.utils.constants.DateTimeFormat.DATE_TIME_FORMATTER;
+import static ru.practicum.ewm.utils.DateTimeFormat.DATE_TIME_FORMATTER;
 
 @Getter
 @Setter
@@ -21,7 +20,7 @@ import static ru.practicum.ewm.utils.constants.DateTimeFormat.DATE_TIME_FORMATTE
 public class EventFullDto {
     String annotation;
 
-    Category category;
+    CategoryDto category;
 
     Long confirmedRequests;
 

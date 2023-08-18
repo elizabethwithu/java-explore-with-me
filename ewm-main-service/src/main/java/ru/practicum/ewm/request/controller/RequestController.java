@@ -2,13 +2,16 @@ package ru.practicum.ewm.request.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.ewm.request.dto.RequestDto;
 import ru.practicum.ewm.request.service.RequestService;
 
+import javax.validation.constraints.Positive;
 import java.util.List;
 
 @RestController
+@Validated
 @RequiredArgsConstructor
 @RequestMapping(path = "/users/{userId}/requests")
 public class RequestController {
@@ -16,8 +19,7 @@ public class RequestController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public RequestDto addRequest(@PathVariable Long userId,
-                                 @RequestParam Long eventId) {
+    public RequestDto addRequest(@PathVariable Long userId, @Positive @RequestParam Long eventId) {
         return requestService.addRequest(userId, eventId);
     }
 
@@ -29,8 +31,7 @@ public class RequestController {
 
     @PatchMapping("/{requestId}/cancel")
     @ResponseStatus(HttpStatus.OK)
-    public RequestDto cancelRequest(@PathVariable Long userId,
-                                    @PathVariable Long requestId) {
+    public RequestDto cancelRequest(@PathVariable Long userId, @PathVariable Long requestId) {
         return requestService.cancelRequest(userId, requestId);
     }
 }

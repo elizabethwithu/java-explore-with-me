@@ -6,6 +6,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.event.dao.EventDao;
 import ru.practicum.ewm.event.model.Event;
+import ru.practicum.ewm.event.model.State;
+import ru.practicum.ewm.event.model.Status;
 import ru.practicum.ewm.exception.ConflictException;
 import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.request.dao.RequestDao;
@@ -14,11 +16,13 @@ import ru.practicum.ewm.request.mapper.RequestMapper;
 import ru.practicum.ewm.request.model.Request;
 import ru.practicum.ewm.user.dao.UserDao;
 import ru.practicum.ewm.user.model.User;
-import ru.practicum.ewm.utils.enums.State;
-import ru.practicum.ewm.utils.enums.Status;
 
+import javax.persistence.EntityManager;
+import javax.persistence.LockModeType;
 import java.time.LocalDateTime;
 import java.util.List;
+
+import static ru.practicum.ewm.user.service.UserServiceImpl.checkUserAvailability;
 
 @Service
 @Slf4j
@@ -31,11 +35,14 @@ public class RequestServiceImpl implements RequestService {
 
     private final EventDao eventDao;
 
+    private final EntityManager em;
+
     @Transactional
     @Override
     public RequestDto addRequest(Long userId, Long eventId) {
         User user = userDao.findById(userId).orElseThrow(() -> new NotFoundException("User", userId));
         Event event = eventDao.findById(eventId).orElseThrow(() -> new NotFoundException("Event", eventId));
+        lockEvent(event);
 
         if (user.getId().equals(event.getInitiator().getId())) {
             throw new ConflictException(String.format("Пользователь %d является инициатором события %d.",userId, eventId));
@@ -59,6 +66,7 @@ public class RequestServiceImpl implements RequestService {
             request = requestDao.save(request);
             event.setConfirmedRequests(event.getConfirmedRequests() + 1L);
             eventDao.save(event);
+            unlockEvent(event);
 
             return RequestMapper.toRequestDto(request);
         }
@@ -71,7 +79,7 @@ public class RequestServiceImpl implements RequestService {
     @Transactional
     @Override
     public RequestDto cancelRequest(Long userId, Long requestId) {
-        userDao.findById(userId).orElseThrow(() -> new NotFoundException("User", userId));
+        checkUserAvailability(userDao, userId);
         Request request = requestDao.findById(requestId).orElseThrow(() -> new NotFoundException("Request", requestId));
 
         request.setStatus(Status.CANCELED);
@@ -83,11 +91,19 @@ public class RequestServiceImpl implements RequestService {
 
     @Override
     public List<RequestDto> findRequestsByUserId(Long userId) {
-        userDao.findById(userId).orElseThrow(() -> new NotFoundException("User", userId));
+        checkUserAvailability(userDao, userId);
 
         List<Request> requests = requestDao.findByRequesterId(userId);
         log.info("Найдены события для пользователя {}.", userId);
 
         return RequestMapper.toRequestDtoList(requests);
+    }
+
+    private void lockEvent(Event event) {
+        em.lock(event, LockModeType.PESSIMISTIC_READ);
+    }
+
+    private void unlockEvent(Event event) {
+        em.lock(event, LockModeType.NONE);
     }
 }

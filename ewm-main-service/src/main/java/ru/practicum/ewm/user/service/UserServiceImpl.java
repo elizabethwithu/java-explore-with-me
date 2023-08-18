@@ -49,8 +49,14 @@ public class UserServiceImpl implements UserService {
     @Transactional
     @Override
     public void removeUserById(Long id) {
-        userDao.findById(id).orElseThrow(() -> new NotFoundException("User", id));
+        checkUserAvailability(userDao, id);
         userDao.deleteById(id);
         log.info("Пользователь {} успешно удален.", id);
+    }
+
+    public static void checkUserAvailability(UserDao dao, Long id) {
+        if (!dao.existsById(id)) {
+            throw new NotFoundException("User", id);
+        }
     }
 }

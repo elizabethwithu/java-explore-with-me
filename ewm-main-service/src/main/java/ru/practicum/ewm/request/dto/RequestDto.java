@@ -2,7 +2,7 @@ package ru.practicum.ewm.request.dto;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-import ru.practicum.ewm.utils.enums.Status;
+import ru.practicum.ewm.event.model.Status;
 
 import java.time.LocalDateTime;
 

@@ -15,7 +15,7 @@ import javax.validation.constraints.PositiveOrZero;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import static ru.practicum.ewm.utils.constants.DateTimeFormat.DATE_TIME_FORMATTER;
+import static ru.practicum.ewm.utils.DateTimeFormat.DATE_TIME_FORMATTER;
 
 @RestController
 @RequiredArgsConstructor
@@ -26,8 +26,10 @@ public class EventPublicController {
 
     @GetMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
-    public EventFullDto findEventById(@Positive @PathVariable Long id, HttpServletRequest request) {
-        return eventService.findEventById(id, request);
+    public EventFullDto findEventById(@PathVariable Long id, HttpServletRequest request) {
+        String uri = request.getRequestURI();
+        String ip = request.getRemoteAddr();
+        return eventService.findEventById(id, uri, ip);
     }
 
     @GetMapping
@@ -42,6 +44,9 @@ public class EventPublicController {
                 @PositiveOrZero @RequestParam(defaultValue = "0") Integer from,
                 @Positive @RequestParam(defaultValue = "10") Integer size,
                 HttpServletRequest request) {
-        return eventService.findAllEvents(text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size, request);
+        String uri = request.getRequestURI();
+        String ip = request.getRemoteAddr();
+        return eventService.findAllEvents(text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size,
+                uri, ip);
     }
 }

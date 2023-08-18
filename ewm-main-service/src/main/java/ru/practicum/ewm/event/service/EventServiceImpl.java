@@ -1,11 +1,8 @@
 package ru.practicum.ewm.event.service;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.HitClient;
@@ -14,12 +11,14 @@ import ru.practicum.ewm.HitOutputDto;
 import ru.practicum.ewm.category.dao.CategoryDao;
 import ru.practicum.ewm.category.model.Category;
 import ru.practicum.ewm.event.dao.EventDao;
+import ru.practicum.ewm.event.dao.LocationDao;
 import ru.practicum.ewm.event.dto.*;
-import ru.practicum.ewm.event.location.Location;
-import ru.practicum.ewm.event.location.LocationDao;
-import ru.practicum.ewm.event.location.LocationMapper;
 import ru.practicum.ewm.event.mapper.EventMapper;
+import ru.practicum.ewm.event.mapper.LocationMapper;
 import ru.practicum.ewm.event.model.Event;
+import ru.practicum.ewm.event.model.Location;
+import ru.practicum.ewm.event.model.State;
+import ru.practicum.ewm.event.model.Status;
 import ru.practicum.ewm.exception.ConflictException;
 import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.exception.UnsupportedException;
@@ -29,17 +28,13 @@ import ru.practicum.ewm.request.mapper.RequestMapper;
 import ru.practicum.ewm.request.model.Request;
 import ru.practicum.ewm.user.dao.UserDao;
 import ru.practicum.ewm.user.model.User;
-import ru.practicum.ewm.utils.enums.State;
-import ru.practicum.ewm.utils.enums.StateAction;
-import ru.practicum.ewm.utils.enums.Status;
 
-import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static ru.practicum.ewm.utils.enums.State.PUBLISHED;
-import static ru.practicum.ewm.utils.enums.Status.CONFIRMED;
+import static ru.practicum.ewm.event.model.State.PUBLISHED;
+import static ru.practicum.ewm.event.model.Status.CONFIRMED;
 
 @Service
 @Slf4j
@@ -53,7 +48,6 @@ public class EventServiceImpl implements EventService {
     private final RequestDao requestDao;
     private final HitClient hitClient;
     public static final LocalDateTime START = LocalDateTime.of(2020, 1, 1, 1, 0);
-    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Transactional
     @Override
@@ -81,7 +75,8 @@ public class EventServiceImpl implements EventService {
 
         Event savedEvent = eventDao.save(EventMapper.toEvent(dto, category, location, user));
         log.info("Событие {} успешно добавлено.", savedEvent.getId());
-        return EventMapper.toEventFullDto(savedEvent);
+
+        return EventMapper.toEventFullDto(savedEvent, 0L);
     }
 
     @Override
@@ -101,9 +96,10 @@ public class EventServiceImpl implements EventService {
         if (!Objects.equals(event.getInitiator().getId(), userId)) {
             throw new ConflictException("User is not the initiator of the event.");
         }
+        Map<Long, Long> views = getViews(List.of(event.getId()));
 
         log.info("Найдено событие {}, опубликованное пользователем {}.",eventId, userId);
-        return EventMapper.toEventFullDto(event);
+        return EventMapper.toEventFullDto(event, views.getOrDefault(event.getId(), 0L));
     }
 
     @Override
@@ -121,7 +117,7 @@ public class EventServiceImpl implements EventService {
 
     @Transactional
     @Override
-    public EventFullDto updateInitiatorEvent(UpdateEventDto eventUpdateDto, Long userId, Long eventId) {
+    public EventFullDto updateInitiatorEvent(NewEventDto eventUpdateDto, Long userId, Long eventId) {
         User user = userDao.findById(userId).orElseThrow(() -> new NotFoundException("User", userId));
         Event event = eventDao.findById(eventId).orElseThrow(() -> new NotFoundException("Event", eventId));
 
@@ -135,17 +131,18 @@ public class EventServiceImpl implements EventService {
 
         Event updatedEvent = updateEvent(event, eventUpdateDto);
 
-        return EventMapper.toEventFullDto(updatedEvent);
+        Map<Long, Long> views = getViews(List.of(event.getId()));
+        return EventMapper.toEventFullDto(updatedEvent, views.getOrDefault(event.getId(), 0L));
     }
 
     @Transactional
     @Override
-    public RequestStatusUpdateResult updateStatusRequestsByUserId(RequestStatusUpdateRequest request,
-                                                                  Long userId, Long eventId) {
+    public RequestStatusUpdateResultDto updateStatusRequestsByUserId(RequestStatusUpdateRequestDto request,
+                                                                     Long userId, Long eventId) {
         User user = userDao.findById(userId).orElseThrow(() -> new NotFoundException("User", userId));
         Event event = eventDao.findById(eventId).orElseThrow(() -> new NotFoundException("Event", eventId));
 
-        RequestStatusUpdateResult result = RequestStatusUpdateResult.builder()
+        RequestStatusUpdateResultDto result = RequestStatusUpdateResultDto.builder()
                 .confirmedRequests(Collections.emptyList())
                 .rejectedRequests(Collections.emptyList())
                 .build();
@@ -188,33 +185,28 @@ public class EventServiceImpl implements EventService {
         result.setConfirmedRequests(RequestMapper.toRequestDtoList(confirmedRequests));
         result.setRejectedRequests(RequestMapper.toRequestDtoList(rejectedRequests));
 
-        eventDao.save(event);
-        requestDao.saveAll(requests);
-
         return result;
     }
 
     @Override
-    public EventFullDto findEventById(Long id, HttpServletRequest request) {
+    public EventFullDto findEventById(Long id, String uri, String ip) {
         Event event = eventDao.findById(id).orElseThrow(() -> new NotFoundException("Event", id));
 
         if (!event.getState().equals(PUBLISHED)) {
             throw new NotFoundException(String.format("Событие %s не опубликовано", id));
         }
 
-        sendStats(request);
+        sendStats(uri, ip);
         Map<Long, Long> views = getViews(List.of(event.getId()));
-        event.setViews(views.getOrDefault(event.getId(), 0L));
-        eventDao.save(event);
 
-        return EventMapper.toEventFullDto(event);
+        return EventMapper.toEventFullDto(event, views.getOrDefault(event.getId(), 0L));
     }
 
     @Override
     public List<EventShortDto> findAllEvents(String text, List<Long> categories, Boolean paid,
                                              LocalDateTime rangeStart, LocalDateTime rangeEnd,
                                              Boolean onlyAvailable, String sort, Integer from,
-                                             Integer size, HttpServletRequest request) {
+                                             Integer size, String uri, String ip) {
         if (rangeStart != null && rangeEnd != null) {
             if (rangeStart.isAfter(rangeEnd)) {
                 throw new UnsupportedException("Дата окончания раньше даты начала.");
@@ -224,16 +216,17 @@ public class EventServiceImpl implements EventService {
 
         List<Event> events = eventDao.findEventsByPublic(text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, pageRequest);
         List<Long> eventsId = events.stream().map(Event::getId).collect(Collectors.toList());
-        sendStats(request);
+        sendStats(uri, ip);
 
         Map<Long, Long> views = getViews(eventsId);
 
-        for (Event event : events) {
+        List<EventShortDto> result = EventMapper.toEventShortDtoList(events);
+
+        for (EventShortDto event : result) {
             event.setViews(views.get(event.getId()));
-            eventDao.save(event);
         }
 
-        return EventMapper.toEventShortDtoList(events);
+        return result;
     }
 
     @Override
@@ -248,16 +241,16 @@ public class EventServiceImpl implements EventService {
         }
 
         Map<Long, Long> views = getViews(eventsId);
-        for (Event event : events) {
+        List<EventFullDto> result = EventMapper.toEventFullDtoList(events);
+        for (EventFullDto event : result) {
             event.setViews(views.getOrDefault(event.getId(), 0L));
-            eventDao.save(event);
         }
-        return EventMapper.toEventFullDtoList(events);
+        return result;
     }
 
     @Transactional
     @Override
-    public EventFullDto updateEventByAdmin(Long eventId, UpdateEventDto eventDto) {
+    public EventFullDto updateEventByAdmin(Long eventId, NewEventDto eventDto) {
         Event event = eventDao.findById(eventId).orElseThrow(() -> new NotFoundException("Event", eventId));
 
         if (eventDto.getStateAction() != null) {
@@ -279,11 +272,12 @@ public class EventServiceImpl implements EventService {
         }
 
         Event updateEvent = updateEvent(event, eventDto);
+        Map<Long, Long> views = getViews(List.of(event.getId()));
 
-        return EventMapper.toEventFullDto(updateEvent);
+        return EventMapper.toEventFullDto(updateEvent, views.getOrDefault(event.getId(), 0L));
     }
 
-    private Event updateEvent(Event event, UpdateEventDto eventUpdateDto) {
+    private Event updateEvent(Event event, NewEventDto eventUpdateDto) {
         Long categoryId = eventUpdateDto.getCategory();
         if (eventUpdateDto.getAnnotation() != null && !eventUpdateDto.getAnnotation().isBlank()) {
             event.setAnnotation(eventUpdateDto.getAnnotation());
@@ -330,30 +324,28 @@ public class EventServiceImpl implements EventService {
         return eventDao.save(event);
     }
 
-    private void sendStats(HttpServletRequest request) {
+    private void sendStats(String uri, String ip) {
         HitInputDto hitDto = HitInputDto.builder()
                 .app("ewm-main-service")
-                .uri(request.getRequestURI())
-                .ip(request.getRemoteAddr())
+                .uri(uri)
+                .ip(ip)
                 .timestamp(LocalDateTime.now())
                 .build();
         hitClient.addHit(hitDto);
     }
 
-    private Map<Long, Long> getViews(List<Long> eventsId) {
+    public Map<Long, Long> getViews(List<Long> eventsId) {
         List<String> uris = new ArrayList<>();
         for (Long eventId : eventsId) {
             String uri = "/events/" + eventId;
             uris.add(uri);
         }
 
-        ResponseEntity<Object> response = hitClient.getHitStats(START, LocalDateTime.now(), uris, true);
+        List<HitOutputDto> response = hitClient.getHitStats(START, LocalDateTime.now(), uris, true);
         log.info("Отправлен запрос на получение статистики {}.", uris);
 
-        List<HitOutputDto> result = objectMapper.convertValue(response.getBody(), new TypeReference<>() {});
-
         Map<Long, Long> views = new HashMap<>();
-        for (HitOutputDto dto : result) {
+        for (HitOutputDto dto : response) {
             String[] split = dto.getUri().split("/");
             String id = split[2];
             views.put(Long.parseLong(id), dto.getHits());

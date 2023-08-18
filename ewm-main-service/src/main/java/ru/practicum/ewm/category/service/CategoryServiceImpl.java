@@ -53,7 +53,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Transactional
     @Override
     public void removeCategoryById(Long id) {
-        categoryDao.findById(id).orElseThrow(() -> new NotFoundException("Category", id));
+        checkCategoryAvailability(categoryDao, id);
         List<Event> events = eventDao.findFirstByCategoryId(id);
 
         if (!events.isEmpty()) {
@@ -81,5 +81,11 @@ public class CategoryServiceImpl implements CategoryService {
         log.info("Найдена категория {}.", categoryId);
 
         return CategoryMapper.toCategoryDto(category);
+    }
+
+    private static void checkCategoryAvailability(CategoryDao dao, Long id) {
+        if (!dao.existsById(id)) {
+            throw new NotFoundException("Category", id);
+        }
     }
 }
