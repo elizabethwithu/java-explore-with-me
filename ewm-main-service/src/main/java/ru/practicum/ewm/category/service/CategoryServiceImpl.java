@@ -33,7 +33,7 @@ public class CategoryServiceImpl implements CategoryService {
         Category savedCategory = categoryDao.save(category);
         log.info("Создана новая категория {}.", savedCategory.getId());
 
-        return CategoryMapper.toCategoryDto(categoryDao.save(savedCategory));
+        return CategoryMapper.toCategoryDto(savedCategory);
     }
 
     @Transactional

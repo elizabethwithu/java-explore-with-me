@@ -7,6 +7,8 @@ import org.springframework.web.bind.annotation.*;
 import ru.practicum.ewm.event.dto.*;
 import ru.practicum.ewm.event.service.EventService;
 import ru.practicum.ewm.request.dto.RequestDto;
+import ru.practicum.ewm.validation.group.Create;
+import ru.practicum.ewm.validation.group.Update;
 
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.PositiveOrZero;

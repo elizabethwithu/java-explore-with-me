@@ -28,6 +28,8 @@ import ru.practicum.ewm.request.mapper.RequestMapper;
 import ru.practicum.ewm.request.model.Request;
 import ru.practicum.ewm.user.dao.UserDao;
 import ru.practicum.ewm.user.model.User;
+import ru.practicum.ewm.utils.StatUtil;
+import ru.practicum.ewm.utils.UnionService;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -47,7 +49,7 @@ public class EventServiceImpl implements EventService {
     private final CategoryDao categoryDao;
     private final RequestDao requestDao;
     private final HitClient hitClient;
-    public static final LocalDateTime START = LocalDateTime.of(2020, 1, 1, 1, 0);
+    private final UnionService unionService;
 
     @Transactional
     @Override
@@ -96,7 +98,8 @@ public class EventServiceImpl implements EventService {
         if (!Objects.equals(event.getInitiator().getId(), userId)) {
             throw new ConflictException("User is not the initiator of the event.");
         }
-        Map<Long, Long> views = getViews(List.of(event.getId()));
+        List<HitOutputDto> hits = unionService.getViews(List.of(eventId));
+        Map<Long, Long> views = StatUtil.mapHitsToViewCountByEventId(hits);
 
         log.info("Найдено событие {}, опубликованное пользователем {}.",eventId, userId);
         return EventMapper.toEventFullDto(event, views.getOrDefault(event.getId(), 0L));
@@ -131,7 +134,8 @@ public class EventServiceImpl implements EventService {
 
         Event updatedEvent = updateEvent(event, eventUpdateDto);
 
-        Map<Long, Long> views = getViews(List.of(event.getId()));
+        List<HitOutputDto> hits = unionService.getViews(List.of(eventId));
+        Map<Long, Long> views = StatUtil.mapHitsToViewCountByEventId(hits);
         return EventMapper.toEventFullDto(updatedEvent, views.getOrDefault(event.getId(), 0L));
     }
 
@@ -197,7 +201,8 @@ public class EventServiceImpl implements EventService {
         }
 
         sendStats(uri, ip);
-        Map<Long, Long> views = getViews(List.of(event.getId()));
+        List<HitOutputDto> hits = unionService.getViews(List.of(id));
+        Map<Long, Long> views = StatUtil.mapHitsToViewCountByEventId(hits);
 
         return EventMapper.toEventFullDto(event, views.getOrDefault(event.getId(), 0L));
     }
@@ -215,10 +220,11 @@ public class EventServiceImpl implements EventService {
         PageRequest pageRequest = PageRequest.of(from / size, size);
 
         List<Event> events = eventDao.findEventsByPublic(text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, pageRequest);
-        List<Long> eventsId = events.stream().map(Event::getId).collect(Collectors.toList());
+        List<Long> eventIds = events.stream().map(Event::getId).collect(Collectors.toList());
         sendStats(uri, ip);
 
-        Map<Long, Long> views = getViews(eventsId);
+        List<HitOutputDto> hits = unionService.getViews(eventIds);
+        Map<Long, Long> views = StatUtil.mapHitsToViewCountByEventId(hits);
 
         List<EventShortDto> result = EventMapper.toEventShortDtoList(events);
 
@@ -235,12 +241,13 @@ public class EventServiceImpl implements EventService {
                                                    Integer from, Integer size) {
         PageRequest pageRequest = PageRequest.of(from / size, size);
         List<Event> events = eventDao.findAllEventsByAdmin(users, states, categories, rangeStart, rangeEnd, pageRequest);
-        List<Long> eventsId = new ArrayList<>();
+        List<Long> eventIds = new ArrayList<>();
         for (Event event : events) {
-            eventsId.add(event.getId());
+            eventIds.add(event.getId());
         }
 
-        Map<Long, Long> views = getViews(eventsId);
+        List<HitOutputDto> hits = unionService.getViews(eventIds);
+        Map<Long, Long> views = StatUtil.mapHitsToViewCountByEventId(hits);
         List<EventFullDto> result = EventMapper.toEventFullDtoList(events);
         for (EventFullDto event : result) {
             event.setViews(views.getOrDefault(event.getId(), 0L));
@@ -272,7 +279,8 @@ public class EventServiceImpl implements EventService {
         }
 
         Event updateEvent = updateEvent(event, eventDto);
-        Map<Long, Long> views = getViews(List.of(event.getId()));
+        List<HitOutputDto> hits = unionService.getViews(List.of(eventId));
+        Map<Long, Long> views = StatUtil.mapHitsToViewCountByEventId(hits);
 
         return EventMapper.toEventFullDto(updateEvent, views.getOrDefault(event.getId(), 0L));
     }
@@ -332,24 +340,5 @@ public class EventServiceImpl implements EventService {
                 .timestamp(LocalDateTime.now())
                 .build();
         hitClient.addHit(hitDto);
-    }
-
-    public Map<Long, Long> getViews(List<Long> eventsId) {
-        List<String> uris = new ArrayList<>();
-        for (Long eventId : eventsId) {
-            String uri = "/events/" + eventId;
-            uris.add(uri);
-        }
-
-        List<HitOutputDto> response = hitClient.getHitStats(START, LocalDateTime.now(), uris, true);
-        log.info("Отправлен запрос на получение статистики {}.", uris);
-
-        Map<Long, Long> views = new HashMap<>();
-        for (HitOutputDto dto : response) {
-            String[] split = dto.getUri().split("/");
-            String id = split[2];
-            views.put(Long.parseLong(id), dto.getHits());
-        }
-        return views;
     }
 }

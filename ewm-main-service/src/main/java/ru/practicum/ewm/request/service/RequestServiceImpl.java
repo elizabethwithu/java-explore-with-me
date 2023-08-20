@@ -17,8 +17,6 @@ import ru.practicum.ewm.request.model.Request;
 import ru.practicum.ewm.user.dao.UserDao;
 import ru.practicum.ewm.user.model.User;
 
-import javax.persistence.EntityManager;
-import javax.persistence.LockModeType;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -30,19 +28,14 @@ import static ru.practicum.ewm.user.service.UserServiceImpl.checkUserAvailabilit
 @RequiredArgsConstructor
 public class RequestServiceImpl implements RequestService {
     private final RequestDao requestDao;
-
     private final UserDao userDao;
-
     private final EventDao eventDao;
-
-    private final EntityManager em;
 
     @Transactional
     @Override
     public RequestDto addRequest(Long userId, Long eventId) {
         User user = userDao.findById(userId).orElseThrow(() -> new NotFoundException("User", userId));
-        Event event = eventDao.findById(eventId).orElseThrow(() -> new NotFoundException("Event", eventId));
-        lockEvent(event);
+        Event event = eventDao.findEventByIdWithLock(eventId).orElseThrow(() -> new NotFoundException("Event", eventId));
 
         if (user.getId().equals(event.getInitiator().getId())) {
             throw new ConflictException(String.format("Пользователь %d является инициатором события %d.",userId, eventId));
@@ -66,7 +59,6 @@ public class RequestServiceImpl implements RequestService {
             request = requestDao.save(request);
             event.setConfirmedRequests(event.getConfirmedRequests() + 1L);
             eventDao.save(event);
-            unlockEvent(event);
 
             return RequestMapper.toRequestDto(request);
         }
@@ -97,13 +89,5 @@ public class RequestServiceImpl implements RequestService {
         log.info("Найдены события для пользователя {}.", userId);
 
         return RequestMapper.toRequestDtoList(requests);
-    }
-
-    private void lockEvent(Event event) {
-        em.lock(event, LockModeType.PESSIMISTIC_READ);
-    }
-
-    private void unlockEvent(Event event) {
-        em.lock(event, LockModeType.NONE);
     }
 }

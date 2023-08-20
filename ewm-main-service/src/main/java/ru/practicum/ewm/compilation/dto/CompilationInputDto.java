@@ -2,6 +2,8 @@ package ru.practicum.ewm.compilation.dto;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import ru.practicum.ewm.validation.group.Create;
+import ru.practicum.ewm.validation.group.Update;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;

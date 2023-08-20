@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.ewm.HitOutputDto;
 import ru.practicum.ewm.compilation.dao.CompilationDao;
 import ru.practicum.ewm.compilation.dto.CompilationInputDto;
 import ru.practicum.ewm.compilation.dto.CompilationOutputDto;
@@ -12,8 +13,9 @@ import ru.practicum.ewm.compilation.mapper.CompilationMapper;
 import ru.practicum.ewm.compilation.model.Compilation;
 import ru.practicum.ewm.event.dao.EventDao;
 import ru.practicum.ewm.event.dto.EventShortDto;
-import ru.practicum.ewm.event.service.EventServiceImpl;
 import ru.practicum.ewm.exception.NotFoundException;
+import ru.practicum.ewm.utils.StatUtil;
+import ru.practicum.ewm.utils.UnionService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,7 +29,7 @@ import java.util.stream.Collectors;
 public class CompilationServiceImpl implements CompilationService {
     private final CompilationDao compilationDao;
     private final EventDao eventDao;
-    private final EventServiceImpl eventService;
+    private final UnionService unionService;
 
     @Override
     public List<CompilationOutputDto> findAllCompilations(Boolean pinned, Integer from, Integer size) {
@@ -112,8 +114,13 @@ public class CompilationServiceImpl implements CompilationService {
     private CompilationOutputDto mapCompilationToDto(Compilation compilation) {
         CompilationOutputDto compilationDto = CompilationMapper.toCompilationOutputDto(compilation);
 
-        List<Long> ids = compilationDto.getEvents().stream().map(EventShortDto::getId).collect(Collectors.toList());
-        Map<Long, Long> views = eventService.getViews(ids);
+        List<Long> ids = compilationDto.getEvents().stream()
+                .map(EventShortDto::getId)
+                .collect(Collectors.toList());
+
+        List<HitOutputDto> hits = unionService.getViews(ids);
+        Map<Long, Long> views = StatUtil.mapHitsToViewCountByEventId(hits);
+
         List<EventShortDto> eventShortDtos = compilationDto.getEvents();
         for (EventShortDto event : eventShortDtos) {
             event.setViews(views.getOrDefault(event.getId(), 0L));

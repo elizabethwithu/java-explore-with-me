@@ -1,5 +1,6 @@
 package ru.practicum.ewm.event.mapper;
 
+import lombok.experimental.UtilityClass;
 import ru.practicum.ewm.category.mapper.CategoryMapper;
 import ru.practicum.ewm.category.model.Category;
 import ru.practicum.ewm.event.dto.EventFullDto;
@@ -17,6 +18,7 @@ import java.util.List;
 
 import static ru.practicum.ewm.event.model.State.PENDING;
 
+@UtilityClass
 public class EventMapper {
     public static Event toEvent(NewEventDto dto, Category category, Location location, User user) {
         return Event.builder()

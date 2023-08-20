@@ -2,18 +2,25 @@ package ru.practicum.ewm.event.dao;
 
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import ru.practicum.ewm.event.model.Event;
 import ru.practicum.ewm.event.model.State;
 
+import javax.persistence.LockModeType;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 @Repository
 public interface EventDao extends JpaRepository<Event, Long> {
+    @Lock(LockModeType.PESSIMISTIC_READ)
+    @Query("SELECT e FROM Event e WHERE e.id = :eventId")
+    Optional<Event> findEventByIdWithLock(@Param("eventId") Long eventId);
+
     List<Event> findFirstByCategoryId(Long categoryId);
 
     Set<Event> findByIdIn(Set<Long> ids);
