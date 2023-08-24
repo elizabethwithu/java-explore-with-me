@@ -285,6 +285,12 @@ public class EventServiceImpl implements EventService {
         return EventMapper.toEventFullDto(updateEvent, views.getOrDefault(event.getId(), 0L));
     }
 
+    public static void checkEventAvailability(EventDao dao, Long id) {
+        if (!dao.existsById(id)) {
+            throw new NotFoundException("Event", id);
+        }
+    }
+
     private Event updateEvent(Event event, NewEventDto eventUpdateDto) {
         Long categoryId = eventUpdateDto.getCategory();
         if (eventUpdateDto.getAnnotation() != null && !eventUpdateDto.getAnnotation().isBlank()) {
