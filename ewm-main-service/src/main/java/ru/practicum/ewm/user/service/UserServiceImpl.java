@@ -1,25 +1,25 @@
 package ru.practicum.ewm.user.service;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.user.dao.UserDao;
 import ru.practicum.ewm.user.dto.UserDto;
 import ru.practicum.ewm.user.mapper.UserMapper;
 import ru.practicum.ewm.user.model.User;
+import ru.practicum.ewm.service.AbstractServiceImpl;
 
 import java.util.List;
 
 @Service
 @Slf4j
 @Transactional(readOnly = true)
-@RequiredArgsConstructor
-public class UserServiceImpl implements UserService {
-    private final UserDao userDao;
+public class UserServiceImpl extends AbstractServiceImpl implements UserService {
+    public UserServiceImpl(UserDao userDao) {
+        super(userDao);
+    }
 
     @Transactional
     @Override
@@ -49,14 +49,8 @@ public class UserServiceImpl implements UserService {
     @Transactional
     @Override
     public void removeUserById(Long id) {
-        checkUserAvailability(userDao, id);
+        checkUserAvailability(id);
         userDao.deleteById(id);
         log.info("Пользователь {} успешно удален.", id);
-    }
-
-    public static void checkUserAvailability(UserDao dao, Long id) {
-        if (!dao.existsById(id)) {
-            throw new NotFoundException("User", id);
-        }
     }
 }
