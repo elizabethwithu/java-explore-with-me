@@ -1,6 +1,5 @@
 package ru.practicum.ewm.request.service;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,20 +15,23 @@ import ru.practicum.ewm.request.mapper.RequestMapper;
 import ru.practicum.ewm.request.model.Request;
 import ru.practicum.ewm.user.dao.UserDao;
 import ru.practicum.ewm.user.model.User;
+import ru.practicum.ewm.service.AbstractServiceImpl;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
-import static ru.practicum.ewm.user.service.UserServiceImpl.checkUserAvailability;
-
 @Service
 @Slf4j
 @Transactional(readOnly = true)
-@RequiredArgsConstructor
-public class RequestServiceImpl implements RequestService {
+public class RequestServiceImpl extends AbstractServiceImpl implements RequestService {
     private final RequestDao requestDao;
-    private final UserDao userDao;
     private final EventDao eventDao;
+
+    public RequestServiceImpl(UserDao userDao, RequestDao requestDao, EventDao eventDao) {
+        super(userDao);
+        this.requestDao = requestDao;
+        this.eventDao = eventDao;
+    }
 
     @Transactional
     @Override
@@ -71,7 +73,7 @@ public class RequestServiceImpl implements RequestService {
     @Transactional
     @Override
     public RequestDto cancelRequest(Long userId, Long requestId) {
-        checkUserAvailability(userDao, userId);
+        checkUserAvailability(userId);
         Request request = requestDao.findById(requestId).orElseThrow(() -> new NotFoundException("Request", requestId));
 
         request.setStatus(Status.CANCELED);
@@ -83,7 +85,7 @@ public class RequestServiceImpl implements RequestService {
 
     @Override
     public List<RequestDto> findRequestsByUserId(Long userId) {
-        checkUserAvailability(userDao, userId);
+        checkUserAvailability(userId);
 
         List<Request> requests = requestDao.findByRequesterId(userId);
         log.info("Найдены события для пользователя {}.", userId);

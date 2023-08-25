@@ -57,9 +57,19 @@ CREATE TABLE IF NOT EXISTS compilations
 
 CREATE TABLE IF NOT EXISTS compilations_events
 (
-    compilation_id  BIGINT REFERENCES compilations (compilation_id),
-    event_id        BIGINT REFERENCES events (event_id),
+    compilation_id  BIGINT REFERENCES compilations (compilation_id) ON DELETE CASCADE,
+    event_id        BIGINT REFERENCES events (event_id) ON DELETE CASCADE,
 
     PRIMARY KEY (compilation_id, event_id)
+);
+
+CREATE TABLE IF NOT EXISTS comments
+(
+    comment_id  BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY UNIQUE,
+    text        VARCHAR(1000) NOT NULL,
+    author_id   BIGINT REFERENCES users (user_id),
+    event_id    BIGINT REFERENCES events (event_id),
+    created     TIMESTAMP NOT NULL,
+    edited      BOOLEAN NOT NULL
 );
 
